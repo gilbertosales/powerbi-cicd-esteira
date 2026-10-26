@@ -1,0 +1,30 @@
+# ---- Power BI (PBIP) ----
+# Cache do modelo semântico (contém dados, pode ser muito grande)
+**/.pbi/cache.abf
+# Configurações locais do Power BI Desktop (por usuário)
+**/.pbi/localSettings.json
+# Arquivos binários do Power BI — versionamos apenas o formato PBIP (texto)
+*.pbix
+*.pbit
+
+# ---- Credenciais (nunca versionar) ----
+.env
+.env.*
+*.pfx
+*.pem
+
+# ---- Python ----
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# ---- Editor / SO ----
+.vscode/*
+!.vscode/extensions.json
+.idea/
+Thumbs.db
+Desktop.ini
+.DS_Store
+~$*
+

@@ -1,0 +1,17 @@
+{
+  "desenvolvimento": {
+    "nome": "BI [Desenvolvimento]",
+    "branch": "develop",
+    "workspace_id": "00000000-0000-0000-0000-000000000001"
+  },
+  "homologacao": {
+    "nome": "BI [Homologação]",
+    "branch": "homologacao",
+    "workspace_id": "00000000-0000-0000-0000-000000000002"
+  },
+  "producao": {
+    "nome": "BI [Produção]",
+    "branch": "main",
+    "workspace_id": "00000000-0000-0000-0000-000000000003"
+  }
+}

@@ -1,0 +1,39 @@
+/// Dados fictícios embutidos, só para demonstrar a esteira.
+table Vendas
+
+	measure 'Receita Total' = SUM ( Vendas[Valor] )
+		formatString: "R$" #,0.00
+
+	measure 'Pedidos' = COUNTROWS ( Vendas )
+		formatString: 0
+
+	column Data
+		dataType: dateTime
+		formatString: Short Date
+		summarizeBy: none
+		sourceColumn: Data
+
+	column Regiao
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Regiao
+
+	column Valor
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: Valor
+
+	partition Vendas = m
+		mode: import
+		source =
+				let
+				    Fonte = #table(
+				        type table [Data = date, Regiao = text, Valor = number],
+				        {
+				            {#date(2026, 1, 15), "Norte", 1200},
+				            {#date(2026, 2, 10), "Sul", 860},
+				            {#date(2026, 3, 5), "Centro-Oeste", 1540}
+				        }
+				    )
+				in
+				    Fonte

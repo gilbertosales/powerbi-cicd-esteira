@@ -1,0 +1,3 @@
+relationship Vendas_Calendario
+	fromColumn: Vendas.Data
+	toColumn: Calendario.Date

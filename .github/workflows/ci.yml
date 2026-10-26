@@ -1,0 +1,46 @@
+# Versão GitHub Actions da mesma esteira do .gitlab-ci.yml:
+# develop → Desenvolvimento (automático) · homologacao/main → aprovação no GitHub Environment.
+name: Esteira Power BI
+
+on:
+  pull_request:
+  push:
+    branches: [develop, homologacao, main]
+
+jobs:
+  validar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pytest
+      - name: Validar PBIP
+        run: python scripts/validar_pbip.py relatorios
+      - name: Testes da esteira
+        run: pytest -q
+
+  deploy:
+    needs: validar
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment: ${{ github.ref_name == 'main' && 'producao' || github.ref_name == 'homologacao' && 'homologacao' || 'desenvolvimento' }}
+    concurrency: deploy-${{ github.ref_name }}
+    env:
+      DEPLOY_MODE: ${{ vars.DEPLOY_MODE || 'dry-run' }}
+      PBI_WORKSPACE_ID: ${{ vars.PBI_WORKSPACE_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - if: env.DEPLOY_MODE == 'real'
+        run: pip install fabric-cicd azure-identity
+      - name: Publicar
+        run: |
+          AMBIENTE=${{ github.ref_name == 'main' && 'producao' || github.ref_name == 'homologacao' && 'homologacao' || 'desenvolvimento' }}
+          python scripts/deploy.py --ambiente "$AMBIENTE" --modo "$DEPLOY_MODE"

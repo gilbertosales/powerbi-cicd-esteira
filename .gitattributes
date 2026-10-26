@@ -1,0 +1,19 @@
+# Normaliza finais de linha para evitar diffs falsos entre Windows e Linux
+* text=auto
+
+*.json   text eol=lf
+*.pbir   text eol=lf
+*.pbism  text eol=lf
+*.pbip   text eol=lf
+*.platform text eol=lf
+*.tmdl   text eol=lf
+*.bim    text eol=lf
+*.yml    text eol=lf
+*.md     text eol=lf
+*.py     text eol=lf
+
+# Binários
+*.png    binary
+*.jpg    binary
+*.svg    text eol=lf
+*.pbix   binary

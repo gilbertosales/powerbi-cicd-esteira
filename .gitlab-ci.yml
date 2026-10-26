@@ -1,0 +1,78 @@
+# Esteira Power BI: develop -> Desenvolvimento | homologacao -> Homologação | main -> Produção
+
+workflow:
+  rules:
+    # Pipeline de MR quando houver MR aberto; senão pipeline da branch (evita pipelines duplicados)
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    # Branches de ambiente sempre geram pipeline (deploy), mesmo com MR de promoção aberto
+    - if: $CI_COMMIT_BRANCH =~ /^(develop|homologacao|main)$/
+    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS
+      when: never
+    - if: $CI_COMMIT_BRANCH
+
+stages:
+  - validar
+  - deploy
+
+default:
+  tags: [powerbi-win]
+
+variables:
+  # "dry-run" = simulação, sem chamar a API do Power BI.
+  # Para publicar de verdade, crie DEPLOY_MODE=real em Settings > CI/CD > Variables
+  # (com escopo do ambiente desejado) — variáveis do projeto têm prioridade sobre este valor.
+  DEPLOY_MODE: "dry-run"
+
+validar-pbip:
+  stage: validar
+  script:
+    - python --version
+    - python scripts/validar_pbip.py relatorios
+
+# Teste do Service Principal (somente leitura): obtém token e lista os 3 workspaces.
+# Manual e só nas branches protegidas, onde as variáveis AZURE_* existem.
+testar-conexao:
+  stage: validar
+  script:
+    - python scripts/testar_conexao.py
+  rules:
+    - if: $CI_COMMIT_BRANCH =~ /^(develop|homologacao|main)$/
+      when: manual
+      allow_failure: true
+
+.deploy:
+  stage: deploy
+  needs: [validar-pbip]
+  resource_group: $CI_ENVIRONMENT_NAME   # um deploy por ambiente de cada vez
+  script:
+    # O deploy real usa o fabric-cicd, que exige Python <= 3.12. O runner informa o caminho
+    # desse Python em FABRIC_PYTHON (config.toml); sem ele, usa o python padrão.
+    - $py = if ($env:FABRIC_PYTHON) { $env:FABRIC_PYTHON } else { "python" }
+    - '& $py --version'
+    - '& $py scripts/deploy.py --ambiente $CI_ENVIRONMENT_NAME --modo $DEPLOY_MODE'
+
+deploy-desenvolvimento:
+  extends: .deploy
+  environment:
+    name: desenvolvimento
+    url: https://app.powerbi.com/groups/$PBI_WORKSPACE_ID/list
+  rules:
+    - if: $CI_COMMIT_BRANCH == "develop"
+
+deploy-homologacao:
+  extends: .deploy
+  environment:
+    name: homologacao
+    url: https://app.powerbi.com/groups/$PBI_WORKSPACE_ID/list
+  rules:
+    - if: $CI_COMMIT_BRANCH == "homologacao"
+      when: manual
+
+deploy-producao:
+  extends: .deploy
+  environment:
+    name: producao
+    url: https://app.powerbi.com/groups/$PBI_WORKSPACE_ID/list
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: manual

@@ -1,0 +1,11 @@
+table Calendario
+
+	column Date
+		dataType: dateTime
+		isKey
+		summarizeBy: none
+		sourceColumn: [Date]
+
+	partition Calendario = calculated
+		mode: import
+		source = CALENDAR ( DATE ( 2026, 1, 1 ), DATE ( 2026, 12, 31 ) )
